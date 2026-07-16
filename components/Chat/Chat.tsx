@@ -28,13 +28,13 @@ const messages: Message[] = [
     id: "5",
     role: "assistant",
     content:
-      "That layout works well with a vertical flex container, a growing scroll region, and a fixed-height footer composer.",
+      "That layout works well with a vertical flex container, a growing scroll region, and a fixed-height footer composer.\n\n```tsx\n<section className=\"flex h-screen flex-col\">\n  <ChatMessages />\n  <ChatInput />\n</section>\n```",
   },
   {
     id: "6",
     role: "assistant",
     content:
-      "Add enough messages here and only this middle section scrolls. The header and input remain visible.",
+      "Add enough messages here and only this middle section scrolls.\nThe header and input remain visible.",
   },
 ];
 
