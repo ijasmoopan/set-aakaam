@@ -1,8 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 import type { Message } from "@/lib/types";
 
-const messages: Message[] = [
+const initialMessages: Message[] = [
   {
     id: "1",
     role: "assistant",
@@ -39,6 +42,23 @@ const messages: Message[] = [
 ];
 
 export function Chat() {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSend = async (content: string) => {
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+    };
+
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    setIsSending(true);
+
+    await new Promise((resolve) => window.setTimeout(resolve, 500));
+    setIsSending(false);
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 text-slate-950">
       <section className="flex h-[min(760px,calc(100vh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -50,7 +70,7 @@ export function Chat() {
         </header>
 
         <ChatMessages messages={messages} />
-        <ChatInput />
+        <ChatInput isSending={isSending} onSend={handleSend} />
       </section>
     </main>
   );
