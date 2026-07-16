@@ -51,12 +51,76 @@ export function Chat() {
       role: "user",
       content,
     };
+    const assistantMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+    };
 
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    const nextMessages = [...messages, userMessage];
+
+    setMessages([...nextMessages, assistantMessage]);
     setIsSending(true);
 
-    await new Promise((resolve) => window.setTimeout(resolve, 500));
-    setIsSending(false);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: nextMessages }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("The assistant could not respond.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessage.id
+              ? { ...message, content: message.content + chunk }
+              : message,
+          ),
+        );
+      }
+
+      const remainingText = decoder.decode();
+
+      if (remainingText) {
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessage.id
+              ? { ...message, content: message.content + remainingText }
+              : message,
+          ),
+        );
+      }
+    } catch {
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message.id === assistantMessage.id
+            ? {
+                ...message,
+                content: "Sorry, I could not get a response. Please try again.",
+              }
+            : message,
+        ),
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
