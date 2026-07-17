@@ -7,6 +7,26 @@ type MarkdownProps = {
 };
 
 const markdownComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="mb-3 text-lg font-semibold leading-7 last:mb-0">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mb-3 text-base font-semibold leading-6 last:mb-0">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mb-2 text-sm font-semibold leading-6 last:mb-0">
+      {children}
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="mb-2 text-sm font-semibold leading-6 last:mb-0">
+      {children}
+    </h4>
+  ),
   p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
   ul: ({ children }) => (
     <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>
@@ -30,6 +50,22 @@ const markdownComponents: Components = {
       {children}
     </blockquote>
   ),
+  table: ({ children }) => (
+    <div className="mb-3 overflow-x-auto last:mb-0">
+      <table className="w-full min-w-max border-collapse text-left text-xs">
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="border border-current/20 bg-black/5 px-3 py-2 font-semibold">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-current/20 px-3 py-2 align-top">{children}</td>
+  ),
+  hr: () => <hr className="my-4 border-current/20" />,
   code: ({ children, className }) => {
     const isCodeBlock = className?.startsWith("language-");
 
