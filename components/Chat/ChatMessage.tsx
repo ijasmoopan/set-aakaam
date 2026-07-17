@@ -2,14 +2,18 @@ import { Markdown } from "./Markdown";
 import type { Message } from "@/lib/types";
 
 type ChatMessageProps = {
+  canRegenerate?: boolean;
   isStreaming?: boolean;
   message: Message;
+  onRegenerate?: () => void;
   onRetry?: (messageId: string) => void;
 };
 
 export function ChatMessage({
+  canRegenerate = false,
   isStreaming = false,
   message,
+  onRegenerate,
   onRetry,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -42,14 +46,27 @@ export function ChatMessage({
         ) : (
           <>
             <Markdown content={message.content} />
-            {isError ? (
-              <button
-                className="mt-3 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
-                onClick={() => onRetry?.(message.id)}
-                type="button"
-              >
-                Retry
-              </button>
+            {isError || canRegenerate ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {isError ? (
+                  <button
+                    className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                    onClick={() => onRetry?.(message.id)}
+                    type="button"
+                  >
+                    Retry
+                  </button>
+                ) : null}
+                {canRegenerate ? (
+                  <button
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    onClick={onRegenerate}
+                    type="button"
+                  >
+                    Regenerate
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             {isStreaming ? (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">

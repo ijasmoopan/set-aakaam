@@ -5,6 +5,7 @@ import type { Message } from "@/lib/types";
 type ChatMessagesProps = {
   isResponding?: boolean;
   messages: Message[];
+  onRegenerate?: () => void;
   onRetry?: (messageId: string) => void;
 };
 
@@ -13,6 +14,7 @@ const bottomThreshold = 48;
 export function ChatMessages({
   isResponding = false,
   messages,
+  onRegenerate,
   onRetry,
 }: ChatMessagesProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -77,12 +79,18 @@ export function ChatMessages({
             isResponding &&
             index === messages.length - 1 &&
             message.role === "assistant";
+          const canRegenerate =
+            !isResponding &&
+            index === messages.length - 1 &&
+            message.role === "assistant";
 
           return (
             <ChatMessage
+              canRegenerate={canRegenerate}
               isStreaming={isStreamingAssistant}
               key={message.id}
               message={message}
+              onRegenerate={onRegenerate}
               onRetry={onRetry}
             />
           );

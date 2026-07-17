@@ -163,6 +163,29 @@ export function Chat() {
     await sendMessages(nextMessages, assistantMessage);
   };
 
+  const handleRegenerate = async () => {
+    if (isSending) {
+      return;
+    }
+
+    const lastUserMessageIndex = messages.findLastIndex(
+      (message) => message.role === "user",
+    );
+
+    if (lastUserMessageIndex < 0) {
+      return;
+    }
+
+    const assistantMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+    };
+    const nextMessages = messages.slice(0, lastUserMessageIndex + 1);
+
+    await sendMessages(nextMessages, assistantMessage);
+  };
+
   const handleStop = () => {
     abortControllerRef.current?.abort();
   };
@@ -180,6 +203,7 @@ export function Chat() {
         <ChatMessages
           isResponding={isSending}
           messages={messages}
+          onRegenerate={handleRegenerate}
           onRetry={handleRetry}
         />
         <ChatInput
