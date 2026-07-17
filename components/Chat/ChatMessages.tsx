@@ -3,12 +3,16 @@ import { ChatMessage } from "./ChatMessage";
 import type { Message } from "@/lib/types";
 
 type ChatMessagesProps = {
+  isResponding?: boolean;
   messages: Message[];
 };
 
 const bottomThreshold = 48;
 
-export function ChatMessages({ messages }: ChatMessagesProps) {
+export function ChatMessages({
+  isResponding = false,
+  messages,
+}: ChatMessagesProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isPinnedToBottomRef = useRef(true);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
@@ -66,9 +70,20 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
         onScroll={updatePinnedState}
         ref={scrollContainerRef}
       >
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
+        {messages.map((message, index) => {
+          const isStreamingAssistant =
+            isResponding &&
+            index === messages.length - 1 &&
+            message.role === "assistant";
+
+          return (
+            <ChatMessage
+              isStreaming={isStreamingAssistant}
+              key={message.id}
+              message={message}
+            />
+          );
+        })}
       </div>
 
       {showJumpToLatest ? (

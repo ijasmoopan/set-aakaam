@@ -11,9 +11,14 @@ import {
 type ChatInputProps = {
   isSending?: boolean;
   onSend: (message: string) => void | Promise<void>;
+  onStop?: () => void;
 };
 
-export function ChatInput({ isSending = false, onSend }: ChatInputProps) {
+export function ChatInput({
+  isSending = false,
+  onSend,
+  onStop,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const canSend = message.trim().length > 0 && !isSending;
@@ -84,6 +89,15 @@ export function ChatInput({ isSending = false, onSend }: ChatInputProps) {
       >
         {isSending ? "Sending" : "Send"}
       </button>
+      {isSending ? (
+        <button
+          className="min-h-12 rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          onClick={onStop}
+          type="button"
+        >
+          Stop
+        </button>
+      ) : null}
     </form>
   );
 }

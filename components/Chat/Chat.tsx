@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 import type { Message } from "@/lib/types";
@@ -44,6 +44,7 @@ const initialMessages: Message[] = [
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSend = async (content: string) => {
     const userMessage: Message = {
@@ -58,7 +59,9 @@ export function Chat() {
     };
 
     const nextMessages = [...messages, userMessage];
+    const abortController = new AbortController();
 
+    abortControllerRef.current = abortController;
     setMessages([...nextMessages, assistantMessage]);
     setIsSending(true);
 
@@ -69,6 +72,7 @@ export function Chat() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ messages: nextMessages }),
+        signal: abortController.signal,
       });
 
       if (!response.ok || !response.body) {
@@ -112,6 +116,23 @@ export function Chat() {
         );
       }
     } catch (error) {
+      const isAbortError =
+        error instanceof Error && error.name === "AbortError";
+
+      if (isAbortError) {
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessage.id && !message.content
+              ? {
+                  ...message,
+                  content: "Response stopped.",
+                }
+              : message,
+          ),
+        );
+        return;
+      }
+
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -128,8 +149,16 @@ export function Chat() {
         ),
       );
     } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+
       setIsSending(false);
     }
+  };
+
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
   };
 
   return (
@@ -142,8 +171,12 @@ export function Chat() {
           </p>
         </header>
 
-        <ChatMessages messages={messages} />
-        <ChatInput isSending={isSending} onSend={handleSend} />
+        <ChatMessages isResponding={isSending} messages={messages} />
+        <ChatInput
+          isSending={isSending}
+          onSend={handleSend}
+          onStop={handleStop}
+        />
       </section>
     </main>
   );
