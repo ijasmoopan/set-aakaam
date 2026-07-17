@@ -4,20 +4,27 @@ import type { Message } from "@/lib/types";
 type ChatMessageProps = {
   isStreaming?: boolean;
   message: Message;
+  onRetry?: (messageId: string) => void;
 };
 
 export function ChatMessage({
   isStreaming = false,
   message,
+  onRetry,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const isError = message.status === "error";
   const showTypingIndicator = isStreaming && !message.content;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-[80%] rounded-lg px-4 py-3 text-sm leading-6 ${
-          isUser ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-800"
+          isUser
+            ? "bg-slate-950 text-white"
+            : isError
+              ? "border border-red-200 bg-red-50 text-red-900"
+              : "bg-slate-100 text-slate-800"
         }`}
       >
         {showTypingIndicator ? (
@@ -35,6 +42,15 @@ export function ChatMessage({
         ) : (
           <>
             <Markdown content={message.content} />
+            {isError ? (
+              <button
+                className="mt-3 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                onClick={() => onRetry?.(message.id)}
+                type="button"
+              >
+                Retry
+              </button>
+            ) : null}
             {isStreaming ? (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />

@@ -5,6 +5,7 @@ import type { Message } from "@/lib/types";
 type ChatMessagesProps = {
   isResponding?: boolean;
   messages: Message[];
+  onRetry?: (messageId: string) => void;
 };
 
 const bottomThreshold = 48;
@@ -12,6 +13,7 @@ const bottomThreshold = 48;
 export function ChatMessages({
   isResponding = false,
   messages,
+  onRetry,
 }: ChatMessagesProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isPinnedToBottomRef = useRef(true);
@@ -81,6 +83,7 @@ export function ChatMessages({
               isStreaming={isStreamingAssistant}
               key={message.id}
               message={message}
+              onRetry={onRetry}
             />
           );
         })}

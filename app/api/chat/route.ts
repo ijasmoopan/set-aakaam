@@ -5,6 +5,10 @@ import {
   type ModelMessage,
 } from "ai";
 import { AiProviderConfigError, getLanguageModel } from "@/lib/ai";
+import {
+  classifyProviderError,
+  createChatErrorResponse,
+} from "@/lib/chat/server-errors";
 
 type IncomingMessage = {
   role: "user" | "assistant";
@@ -12,9 +16,17 @@ type IncomingMessage = {
 };
 
 export async function POST(request: Request) {
-  const { messages } = (await request.json()) as {
-    messages?: IncomingMessage[];
-  };
+  let messages: IncomingMessage[] = [];
+
+  try {
+    const body = (await request.json()) as {
+      messages?: IncomingMessage[];
+    };
+
+    messages = body.messages ?? [];
+  } catch {
+    return createChatErrorResponse("invalid_request", 400);
+  }
 
   let model;
 
@@ -22,23 +34,34 @@ export async function POST(request: Request) {
     model = getLanguageModel();
   } catch (error) {
     if (error instanceof AiProviderConfigError) {
-      return Response.json({ error: error.message }, { status: 400 });
+      return createChatErrorResponse("provider_config_error", 400);
     }
 
     throw error;
   }
 
-  const result = streamText({
-    model,
-    messages: (messages ?? []).map(
-      (message): ModelMessage => ({
-        role: message.role,
-        content: message.content,
-      }),
-    ),
-  });
+  try {
+    const result = streamText({
+      model,
+      messages: messages.map(
+        (message): ModelMessage => ({
+          role: message.role,
+          content: message.content,
+        }),
+      ),
+      onError: ({ error }) => {
+        console.error("Chat stream failed", error);
+      },
+    });
 
-  return createTextStreamResponse({
-    stream: toTextStream({ stream: result.stream }),
-  });
+    return createTextStreamResponse({
+      stream: toTextStream({ stream: result.stream }),
+    });
+  } catch (error) {
+    const [code, status] = classifyProviderError(error);
+
+    console.error("Chat request failed", error);
+
+    return createChatErrorResponse(code, status);
+  }
 }

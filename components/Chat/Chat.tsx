@@ -3,6 +3,12 @@
 import { useRef, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
+import {
+  ChatResponseError,
+  fallbackChatErrorMessage,
+  getChatErrorMessage,
+  type ChatErrorResponse,
+} from "@/lib/chat/errors";
 import type { Message } from "@/lib/types";
 
 export function Chat() {
@@ -10,19 +16,10 @@ export function Chat() {
   const [isSending, setIsSending] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handleSend = async (content: string) => {
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content,
-    };
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: "",
-    };
-
-    const nextMessages = [...messages, userMessage];
+  const sendMessages = async (
+    nextMessages: Message[],
+    assistantMessage: Message,
+  ) => {
     const abortController = new AbortController();
 
     abortControllerRef.current = abortController;
@@ -35,16 +32,21 @@ export function Chat() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({
+          messages: nextMessages.filter((message) => message.status !== "error"),
+        }),
         signal: abortController.signal,
       });
 
       if (!response.ok || !response.body) {
-        const data = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
+        const data = (await response.json().catch(() => null)) as
+          | ChatErrorResponse
+          | null;
 
-        throw new Error(data?.error ?? "The assistant could not respond.");
+        throw new ChatResponseError(
+          data?.error ?? fallbackChatErrorMessage,
+          data?.code,
+        );
       }
 
       const reader = response.body.getReader();
@@ -97,10 +99,7 @@ export function Chat() {
         return;
       }
 
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Sorry, I could not get a response. Please try again.";
+      const errorMessage = getChatErrorMessage(error);
 
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
@@ -108,6 +107,7 @@ export function Chat() {
             ? {
                 ...message,
                 content: errorMessage,
+                status: "error",
               }
             : message,
         ),
@@ -119,6 +119,48 @@ export function Chat() {
 
       setIsSending(false);
     }
+  };
+
+  const handleSend = async (content: string) => {
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+    };
+    const assistantMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+    };
+
+    const nextMessages = [...messages, userMessage];
+
+    await sendMessages(nextMessages, assistantMessage);
+  };
+
+  const handleRetry = async (assistantMessageId: string) => {
+    const failedAssistantIndex = messages.findIndex(
+      (message) => message.id === assistantMessageId,
+    );
+
+    if (failedAssistantIndex <= 0 || isSending) {
+      return;
+    }
+
+    const previousUserMessage = messages[failedAssistantIndex - 1];
+
+    if (previousUserMessage.role !== "user") {
+      return;
+    }
+
+    const assistantMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+    };
+    const nextMessages = messages.slice(0, failedAssistantIndex);
+
+    await sendMessages(nextMessages, assistantMessage);
   };
 
   const handleStop = () => {
@@ -135,7 +177,11 @@ export function Chat() {
           </p>
         </header>
 
-        <ChatMessages isResponding={isSending} messages={messages} />
+        <ChatMessages
+          isResponding={isSending}
+          messages={messages}
+          onRetry={handleRetry}
+        />
         <ChatInput
           isSending={isSending}
           onSend={handleSend}
