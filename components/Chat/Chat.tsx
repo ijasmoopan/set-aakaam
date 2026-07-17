@@ -14,6 +14,7 @@ import type { Message } from "@/lib/types";
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const sendMessages = async (
@@ -33,15 +34,17 @@ export function Chat() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: nextMessages.filter((message) => message.status !== "error"),
+          messages: nextMessages.filter(
+            (message) => message.status !== "error",
+          ),
         }),
         signal: abortController.signal,
       });
 
       if (!response.ok || !response.body) {
-        const data = (await response.json().catch(() => null)) as
-          | ChatErrorResponse
-          | null;
+        const data = (await response
+          .json()
+          .catch(() => null)) as ChatErrorResponse | null;
 
         throw new ChatResponseError(
           data?.error ?? fallbackChatErrorMessage,
@@ -126,11 +129,13 @@ export function Chat() {
       id: crypto.randomUUID(),
       role: "user",
       content,
+      createdAt: Date.now(),
     };
     const assistantMessage: Message = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
+      createdAt: Date.now(),
     };
 
     const nextMessages = [...messages, userMessage];
@@ -157,6 +162,7 @@ export function Chat() {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
+      createdAt: Date.now(),
     };
     const nextMessages = messages.slice(0, failedAssistantIndex);
 
@@ -180,6 +186,7 @@ export function Chat() {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
+      createdAt: Date.now(),
     };
     const nextMessages = messages.slice(0, lastUserMessageIndex + 1);
 
@@ -191,13 +198,36 @@ export function Chat() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 text-slate-950">
-      <section className="flex h-[min(760px,calc(100vh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <header className="border-b border-slate-200 px-5 py-4">
-          <h1 className="text-base font-semibold">AI Chat</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Start a conversation.
-          </p>
+    <main
+      className="chat-shell flex min-h-dvh items-center justify-center p-3 text-slate-950 transition-colors duration-300 sm:p-6 dark:text-slate-100"
+      data-theme={theme}
+    >
+      <a className="skip-link" href="#message">
+        Skip to composer
+      </a>
+      <section
+        aria-label="AI chat"
+        className="flex h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-2xl shadow-slate-200/70 backdrop-blur sm:h-[min(820px,calc(100dvh-3rem))] dark:border-white/10 dark:bg-slate-950/90 dark:shadow-slate-950/50"
+      >
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200/80 px-4 py-3 sm:px-6 sm:py-4 dark:border-white/10">
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold leading-6 text-slate-950 dark:text-white">
+              AI Chat
+            </h1>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+              {isSending ? "Assistant is writing..." : "Start a conversation."}
+            </p>
+          </div>
+          <button
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 active:translate-y-0 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-white/20 dark:hover:bg-white/10"
+            onClick={() =>
+              setTheme((current) => (current === "dark" ? "light" : "dark"))
+            }
+            type="button"
+          >
+            {theme === "dark" ? "Light" : "Dark"}
+          </button>
         </header>
 
         <ChatMessages

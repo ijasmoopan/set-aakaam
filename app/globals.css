@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7fb;
+  --foreground: #111827;
 }
 
 @theme inline {
@@ -22,5 +24,100 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgb(15 23 42 / 0.16);
+}
+
+.chat-shell {
+  background:
+    radial-gradient(circle at 16% 12%, rgb(148 163 184 / 0.24), transparent 30rem),
+    linear-gradient(135deg, #f8fafc 0%, #eef2f7 52%, #e5e7eb 100%);
+}
+
+.chat-shell[data-theme="dark"] {
+  background:
+    radial-gradient(circle at 20% 10%, rgb(51 65 85 / 0.52), transparent 28rem),
+    linear-gradient(135deg, #020617 0%, #0f172a 52%, #111827 100%);
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 10;
+  transform: translateY(-150%);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 0.18);
+  transition: transform 180ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
+}
+
+.chat-scroll {
+  scrollbar-color: rgb(100 116 139 / 0.55) transparent;
+  scrollbar-width: thin;
+}
+
+.message-enter {
+  animation: message-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 0.45rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: currentColor;
+  animation: caret-blink 900ms steps(2, start) infinite;
+}
+
+@keyframes message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

@@ -70,36 +70,53 @@ export function ChatMessages({
   return (
     <div className="relative min-h-0 flex-1">
       <div
-        className="h-full space-y-4 overflow-y-auto px-5 py-5"
+        aria-label="Conversation messages"
+        className="chat-scroll h-full space-y-5 overflow-y-auto px-4 py-5 outline-none sm:px-6 sm:py-6"
         onScroll={updatePinnedState}
         ref={scrollContainerRef}
+        role="log"
+        tabIndex={0}
       >
-        {messages.map((message, index) => {
-          const isStreamingAssistant =
-            isResponding &&
-            index === messages.length - 1 &&
-            message.role === "assistant";
-          const canRegenerate =
-            !isResponding &&
-            index === messages.length - 1 &&
-            message.role === "assistant";
+        {messages.length ? (
+          messages.map((message, index) => {
+            const isStreamingAssistant =
+              isResponding &&
+              index === messages.length - 1 &&
+              message.role === "assistant";
+            const canRegenerate =
+              !isResponding &&
+              index === messages.length - 1 &&
+              message.role === "assistant";
 
-          return (
-            <ChatMessage
-              canRegenerate={canRegenerate}
-              isStreaming={isStreamingAssistant}
-              key={message.id}
-              message={message}
-              onRegenerate={onRegenerate}
-              onRetry={onRetry}
-            />
-          );
-        })}
+            return (
+              <ChatMessage
+                canRegenerate={canRegenerate}
+                isStreaming={isStreamingAssistant}
+                key={message.id}
+                message={message}
+                onRegenerate={onRegenerate}
+                onRetry={onRetry}
+              />
+            );
+          })
+        ) : (
+          <div className="mx-auto flex h-full max-w-md flex-col items-center justify-center px-4 text-center">
+            <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-lg shadow-slate-300 dark:bg-white dark:text-slate-950 dark:shadow-none">
+              AI
+            </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              Ask a question, draft an idea, or paste something messy.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Press Enter to send. Use Shift+Enter for a new line.
+            </p>
+          </div>
+        )}
       </div>
 
       {showJumpToLatest ? (
         <button
-          className="absolute bottom-4 right-5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          className="absolute bottom-4 right-4 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-200/70 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 active:translate-y-0 sm:right-6 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200 dark:shadow-black/30 dark:hover:border-white/20 dark:hover:bg-slate-800"
           onClick={handleJumpToLatest}
           type="button"
         >
