@@ -1,10 +1,10 @@
-import { openai } from "@ai-sdk/openai";
 import {
   createTextStreamResponse,
   streamText,
   toTextStream,
   type ModelMessage,
 } from "ai";
+import { AiProviderConfigError, getLanguageModel } from "@/lib/ai";
 
 type IncomingMessage = {
   role: "user" | "assistant";
@@ -16,14 +16,26 @@ export async function POST(request: Request) {
     messages?: IncomingMessage[];
   };
 
-  const modelMessages: ModelMessage[] = (messages ?? []).map((message) => ({
-    role: message.role,
-    content: message.content,
-  }));
+  let model;
+
+  try {
+    model = getLanguageModel();
+  } catch (error) {
+    if (error instanceof AiProviderConfigError) {
+      return Response.json({ error: error.message }, { status: 400 });
+    }
+
+    throw error;
+  }
 
   const result = streamText({
-    model: openai(process.env.OPENAI_MODEL ?? "gpt-5"),
-    messages: modelMessages,
+    model,
+    messages: (messages ?? []).map(
+      (message): ModelMessage => ({
+        role: message.role,
+        content: message.content,
+      }),
+    ),
   });
 
   return createTextStreamResponse({

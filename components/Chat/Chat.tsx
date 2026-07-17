@@ -72,7 +72,11 @@ export function Chat() {
       });
 
       if (!response.ok || !response.body) {
-        throw new Error("The assistant could not respond.");
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        throw new Error(data?.error ?? "The assistant could not respond.");
       }
 
       const reader = response.body.getReader();
@@ -107,13 +111,18 @@ export function Chat() {
           ),
         );
       }
-    } catch {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Sorry, I could not get a response. Please try again.";
+
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
           message.id === assistantMessage.id
             ? {
                 ...message,
-                content: "Sorry, I could not get a response. Please try again.",
+                content: errorMessage,
               }
             : message,
         ),
@@ -129,7 +138,7 @@ export function Chat() {
         <header className="border-b border-slate-200 px-5 py-4">
           <h1 className="text-base font-semibold">AI Chat</h1>
           <p className="mt-1 text-sm text-slate-500">
-            A very basic chat layout
+            Start a conversation.
           </p>
         </header>
 
