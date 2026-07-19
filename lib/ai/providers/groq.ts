@@ -9,11 +9,15 @@ export const groqProvider: AiProvider = {
   id: "groq",
   createModel: () => {
     const apiKey = process.env[apiKeyEnv];
+    const modelId = process.env[modelEnv] ?? defaultModel;
 
     if (!apiKey) {
       throw new AiProviderConfigError(`Set ${apiKeyEnv} to use Groq.`);
     }
 
-    return createGroq({ apiKey })(process.env[modelEnv] ?? defaultModel);
+    return {
+      model: createGroq({ apiKey })(modelId),
+      modelId,
+    };
   },
 };

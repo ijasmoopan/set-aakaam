@@ -9,6 +9,7 @@ import {
   getChatErrorMessage,
   type ChatErrorResponse,
 } from "@/lib/chat/errors";
+import { readChatTextStream } from "@/lib/chat/read-chat-text-stream";
 import type { Message } from "@/lib/types";
 
 export function Chat() {
@@ -52,38 +53,32 @@ export function Chat() {
         );
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
+      const appendAssistantContent = (content: string) => {
+        if (!content) {
+          return;
         }
 
-        const chunk = decoder.decode(value, { stream: true });
-
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === assistantMessage.id
-              ? { ...message, content: message.content + chunk }
+              ? { ...message, content: message.content + content }
               : message,
           ),
         );
-      }
+      };
 
-      const remainingText = decoder.decode();
-
-      if (remainingText) {
-        setMessages((currentMessages) =>
-          currentMessages.map((message) =>
-            message.id === assistantMessage.id
-              ? { ...message, content: message.content + remainingText }
-              : message,
-          ),
-        );
-      }
+      await readChatTextStream(response.body, {
+        onText: appendAssistantContent,
+        onUsage: (usage) => {
+          setMessages((currentMessages) =>
+            currentMessages.map((message) =>
+              message.id === assistantMessage.id
+                ? { ...message, usage }
+                : message,
+            ),
+          );
+        },
+      });
     } catch (error) {
       const isAbortError =
         error instanceof Error && error.name === "AbortError";

@@ -9,11 +9,15 @@ export const anthropicProvider: AiProvider = {
   id: "anthropic",
   createModel: () => {
     const apiKey = process.env[apiKeyEnv];
+    const modelId = process.env[modelEnv] ?? defaultModel;
 
     if (!apiKey) {
       throw new AiProviderConfigError(`Set ${apiKeyEnv} to use Anthropic.`);
     }
 
-    return createAnthropic({ apiKey })(process.env[modelEnv] ?? defaultModel);
+    return {
+      model: createAnthropic({ apiKey })(modelId),
+      modelId,
+    };
   },
 };

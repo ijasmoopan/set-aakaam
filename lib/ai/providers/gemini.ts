@@ -9,11 +9,15 @@ export const geminiProvider: AiProvider = {
   id: "gemini",
   createModel: () => {
     const apiKey = process.env[apiKeyEnv];
+    const modelId = process.env[modelEnv] ?? defaultModel;
 
     if (!apiKey) {
       throw new AiProviderConfigError(`Set ${apiKeyEnv} to use Gemini.`);
     }
 
-    return createGoogle({ apiKey })(process.env[modelEnv] ?? defaultModel);
+    return {
+      model: createGoogle({ apiKey })(modelId),
+      modelId,
+    };
   },
 };

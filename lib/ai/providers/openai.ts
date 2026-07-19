@@ -9,11 +9,15 @@ export const openaiProvider: AiProvider = {
   id: "openai",
   createModel: () => {
     const apiKey = process.env[apiKeyEnv];
+    const modelId = process.env[modelEnv] ?? defaultModel;
 
     if (!apiKey) {
       throw new AiProviderConfigError(`Set ${apiKeyEnv} to use OpenAI.`);
     }
 
-    return createOpenAI({ apiKey })(process.env[modelEnv] ?? defaultModel);
+    return {
+      model: createOpenAI({ apiKey })(modelId),
+      modelId,
+    };
   },
 };

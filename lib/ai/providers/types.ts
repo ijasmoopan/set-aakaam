@@ -4,7 +4,10 @@ export type AiProviderId = "anthropic" | "gemini" | "groq" | "openai";
 
 export type AiProvider = {
   id: AiProviderId;
-  createModel: () => LanguageModel;
+  createModel: () => {
+    model: LanguageModel;
+    modelId: string;
+  };
 };
 
 export class AiProviderConfigError extends Error {

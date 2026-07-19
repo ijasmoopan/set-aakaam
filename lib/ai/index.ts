@@ -34,7 +34,18 @@ export const getSelectedAiProvider = () => {
   return providers[providerId];
 };
 
-export const getLanguageModel = () => getSelectedAiProvider().createModel();
+export const getLanguageModelConfig = () => {
+  const provider = getSelectedAiProvider();
+  const { model, modelId } = provider.createModel();
+
+  return {
+    model,
+    modelId,
+    providerId: provider.id,
+  };
+};
+
+export const getLanguageModel = () => getLanguageModelConfig().model;
 
 export { AiProviderConfigError };
 export type { AiProviderId };
