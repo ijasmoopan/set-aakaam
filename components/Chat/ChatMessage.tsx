@@ -15,6 +15,17 @@ const formatMessageTime = (createdAt: number) =>
     minute: "2-digit",
   }).format(new Date(createdAt));
 
+const formatTokenCount = (tokens: number | null) =>
+  tokens == null ? "Unknown" : new Intl.NumberFormat().format(tokens);
+
+const formatLatency = (latency: number) => {
+  if (latency < 1000) {
+    return `${latency} ms`;
+  }
+
+  return `${(latency / 1000).toFixed(1)} s`;
+};
+
 export function ChatMessage({
   canRegenerate = false,
   isStreaming = false,
@@ -27,6 +38,7 @@ export function ChatMessage({
   const showTypingIndicator = isStreaming && !message.content;
   const timestamp = formatMessageTime(message.createdAt);
   const avatarLabel = isUser ? "You" : "AI";
+  const usage = !isUser && !isError ? message.usage : undefined;
 
   return (
     <article
@@ -110,6 +122,25 @@ export function ChatMessage({
               <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                 <span className="typing-caret" aria-hidden="true" />
                 <span>Responding</span>
+              </div>
+            ) : null}
+            {usage ? (
+              <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-slate-200/80 pt-2 text-[0.7rem] leading-4 text-slate-500 dark:border-white/10 dark:text-slate-400">
+                <span>
+                  {formatTokenCount(usage.totalTokens)} total tokens
+                </span>
+                <span aria-hidden="true">/</span>
+                <span>
+                  {formatTokenCount(usage.inputTokens)} in
+                  {" / "}
+                  {formatTokenCount(usage.outputTokens)} out
+                </span>
+                <span aria-hidden="true">/</span>
+                <span>
+                  {usage.provider} · {usage.model}
+                </span>
+                <span aria-hidden="true">/</span>
+                <span>{formatLatency(usage.latency)}</span>
               </div>
             ) : null}
           </>
